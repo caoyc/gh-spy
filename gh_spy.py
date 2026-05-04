@@ -106,7 +106,10 @@ def _build_key_finding(report):
         findings.append(f"活跃度和维护性均为 F，项目可能已进入停滞状态，{m['open_issues']} 个 issue 无人响应")
 
     if not findings:
-        if s['activity'] in ('C', 'D'):
+        # 单一维护者
+        if m['contributors'] <= 3:
+            findings.append(f"个人项目（{m['contributors']} 贡献者），{'活跃开发中' if s['activity'] in ('A', 'B') else '近期活跃度低'}，项目健康度依赖单一维护者")
+        elif s['activity'] in ('C', 'D'):
             findings.append("近期活跃度一般，项目进入稳定维护阶段")
         elif s['activity'] == 'A' and s['maintenance'] in ('A', 'B'):
             findings.append("活跃度高且维护响应快，项目健康发展")
@@ -186,11 +189,20 @@ def _build_insights(reports):
 
 def _clean_topic(keyword):
     """从搜索 query 中提取干净的主题名。"""
-    ACRONYMS = {'mcp', 'ai', 'llm', 'rag', 'sdk', 'api', 'cli', 'sre', 'devops', 'css', 'html'}
-    # 如果包含 "model context protocol"，缩写为 "MCP"
+    # 领域名→中文映射（常见主题）
+    TOPIC_CN = {
+        'mcp server': 'MCP Server',
+        'ai memory': 'AI 记忆',
+        'vector database': '向量数据库',
+        'rag': 'RAG',
+        'llm': '大模型',
+        'code assistant': '代码助手',
+        'agent': 'AI Agent',
+    }
+    # 先展开全称再缩写
     cleaned = keyword
     if 'model context protocol' in keyword.lower():
-        cleaned = cleaned.replace('model context protocol', 'MCP').replace('Model Context Protocol', 'MCP')
+        cleaned = keyword.replace('model context protocol', 'MCP').replace('Model Context Protocol', 'MCP')
     # 去重
     parts = cleaned.split()
     seen_lower = set()
@@ -199,14 +211,13 @@ def _clean_topic(keyword):
         if p.lower() not in seen_lower:
             seen_lower.add(p.lower())
             unique.append(p)
-    # 每个词首字母大写，但保留已知缩写全大写
-    result = []
-    for p in unique:
-        if p.upper() in ACRONYMS or p.lower() in ACRONYMS:
-            result.append(p.upper())
-        else:
-            result.append(p.capitalize())
-    return ' '.join(result)
+    # 尝试匹配中文主题名
+    key_lower = ' '.join(p.lower() for p in unique)
+    for eng, cn in TOPIC_CN.items():
+        if eng in key_lower:
+            return cn
+    # 兜底：直接返回去重后的原文
+    return ' '.join(unique)
 
 
 def _build_why_section(topic, reports):
@@ -250,19 +261,8 @@ def generate_landscape(fetcher, keyword, top_n, output_path=None):
 
     reports.sort(key=lambda x: x['metrics']['stars'], reverse=True)
 
-    # --- 梯队划分 ---
-    tiers = []
-    tier1 = [r for r in reports if r['metrics']['stars'] >= 10000 or r['scores']['popularity'] == 'A']
-    remaining = [r for r in reports if r not in tier1]
-    tier2 = [r for r in remaining if r['metrics']['stars'] >= 5000]
-    tier3 = [r for r in remaining if r not in tier2]
-
-    if tier1:
-        tiers.append(tier1)
-    if tier2:
-        tiers.append(tier2)
-    if tier3:
-        tiers.append(tier3)
+    # --- 梯队划分（基于自然间隙） ---
+    tiers = _split_tiers(reports)
 
     # --- 生成洞察（用于标题） ---
     insights = _build_insights(reports)
