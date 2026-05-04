@@ -72,7 +72,7 @@ def generate_landscape(fetcher, keyword, top_n, output_path=None):
     lines.append(f"## 详细分析")
     lines.append(f"")
     for r in reports:
-        lines.append(fetcher.format_spy_report(r))
+        lines.append(fetcher.format_spy_report(r, fmt='markdown'))
         lines.append("")
 
     content = "\n".join(lines)

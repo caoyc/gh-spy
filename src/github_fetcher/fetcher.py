@@ -575,54 +575,85 @@ Stars：{repo['stars']}
             'owner': self._extract_user_contact(repo.owner),
         }
 
-    def format_spy_report(self, report: Dict) -> str:
-        """格式化情报报告。"""
+    def format_spy_report(self, report: Dict, fmt: str = 'terminal') -> str:
+        """格式化情报报告。fmt: 'terminal' 或 'markdown'。"""
         b = report['basic']
         m = report['metrics']
         s = report['scores']
         o = report['owner']
-
         lines = []
-        lines.append(f"{'='*60}")
-        lines.append(f"  {b['name']}")
-        lines.append(f"  {b.get('description', 'No description')}")
-        lines.append(f"{'='*60}")
-        lines.append(f"")
-        lines.append(f"  Language:  {b.get('language', 'N/A')}")
-        lines.append(f"  License:   {b.get('license', 'N/A')}")
-        lines.append(f"  Topics:    {', '.join(b.get('topics', [])[:8])}")
-        lines.append(f"  Age:       {b['age_days']} days (since {b['created_at']})")
-        lines.append(f"  Size:      {b.get('size_mb', '?')} MB")
-        if b.get('homepage'):
-            lines.append(f"  Homepage:  {b['homepage']}")
-        lines.append(f"")
-        lines.append(f"  --- Metrics ---")
-        lines.append(f"  Stars:           {m['stars']:>8,}")
-        lines.append(f"  Forks:           {m['forks']:>8,}")
-        lines.append(f"  Watchers:        {m['watchers']:>8,}")
-        lines.append(f"  Open Issues:     {m['open_issues']:>8,}")
-        lines.append(f"  Contributors:    {m['contributors']:>8,}")
-        lines.append(f"  Releases:        {m['releases']:>8,}")
-        lines.append(f"  Commits (30d):   {m['commits_last_30d']:>8,}")
-        lines.append(f"  Avg Issue Close: {str(m['avg_issue_close_days']) + ' days' if m['avg_issue_close_days'] else 'N/A':>8}")
-        lines.append(f"  Last Release:    {str(m.get('last_release') or 'N/A'):>8}")
-        lines.append(f"")
-        lines.append(f"  --- Report Card ---")
-        lines.append(f"  Activity:      [{s['activity']}]")
-        lines.append(f"  Maintenance:   [{s['maintenance']}]")
-        lines.append(f"  Community:     [{s['community']}]")
-        lines.append(f"  Popularity:    [{s['popularity']}]")
-        lines.append(f"  Opportunity:   [{s['opportunity'].upper()}]")
-        lines.append(f"")
-        lines.append(f"  --- Owner ---")
-        lines.append(f"  {o.get('login', '?')} / {o.get('name', '?')}")
-        contacts = []
-        if o.get('email'): contacts.append(f"Email: {o['email']}")
-        if o.get('twitter'): contacts.append(f"Twitter: @{o['twitter']}")
-        if o.get('blog'): contacts.append(f"Blog: {o['blog']}")
-        if o.get('location'): contacts.append(f"Location: {o['location']}")
-        lines.append(f"  {' | '.join(contacts) if contacts else 'GitHub only'}")
-        lines.append(f"{'='*60}")
+
+        if fmt == 'markdown':
+            lines.append(f"### [{b['name']}](https://github.com/{b['name']})")
+            lines.append(f"")
+            lines.append(f"*{b.get('description', 'No description')}*")
+            lines.append(f"")
+            lines.append(f"| 指标 | 值 |")
+            lines.append(f"|------|-----|")
+            lines.append(f"| Language | {b.get('language', 'N/A')} |")
+            lines.append(f"| License | {b.get('license', 'N/A')} |")
+            lines.append(f"| Stars | **{m['stars']:,}** |")
+            lines.append(f"| Forks | {m['forks']:,} |")
+            lines.append(f"| Contributors | {m['contributors']} |")
+            lines.append(f"| Commits (30d) | {m['commits_last_30d']} |")
+            lines.append(f"| Open Issues | {m['open_issues']} |")
+            lines.append(f"| Avg Issue Close | {str(m['avg_issue_close_days']) + ' days' if m['avg_issue_close_days'] else 'N/A'} |")
+            lines.append(f"| Last Release | {m.get('last_release') or 'N/A'} |")
+            if b.get('homepage'):
+                lines.append(f"| Homepage | {b['homepage']} |")
+            lines.append(f"")
+            lines.append(f"**Report Card**: Activity:{s['activity']} | Maintenance:{s['maintenance']} | Community:{s['community']} | Popularity:{s['popularity']} | Opportunity:{s['opportunity'].upper()}")
+            lines.append(f"")
+            contacts = []
+            if o.get('email'): contacts.append(f"Email: {o['email']}")
+            if o.get('twitter'): contacts.append(f"Twitter: @{o['twitter']}")
+            if o.get('blog'): contacts.append(f"Blog: {o['blog']}")
+            if o.get('location'): contacts.append(f"Location: {o['location']}")
+            lines.append(f"**Owner**: {o.get('login', '?')} ({o.get('name', '?')}) — {' | '.join(contacts) if contacts else 'GitHub only'}")
+            lines.append(f"")
+            lines.append(f"---")
+        else:
+            lines.append(f"{'='*60}")
+            lines.append(f"  {b['name']}")
+            lines.append(f"  {b.get('description', 'No description')}")
+            lines.append(f"{'='*60}")
+            lines.append(f"")
+            lines.append(f"  Language:  {b.get('language', 'N/A')}")
+            lines.append(f"  License:   {b.get('license', 'N/A')}")
+            lines.append(f"  Topics:    {', '.join(b.get('topics', [])[:8])}")
+            lines.append(f"  Age:       {b['age_days']} days (since {b['created_at']})")
+            lines.append(f"  Size:      {b.get('size_mb', '?')} MB")
+            if b.get('homepage'):
+                lines.append(f"  Homepage:  {b['homepage']}")
+            lines.append(f"")
+            lines.append(f"  --- Metrics ---")
+            lines.append(f"  Stars:           {m['stars']:>8,}")
+            lines.append(f"  Forks:           {m['forks']:>8,}")
+            lines.append(f"  Watchers:        {m['watchers']:>8,}")
+            lines.append(f"  Open Issues:     {m['open_issues']:>8,}")
+            lines.append(f"  Contributors:    {m['contributors']:>8,}")
+            lines.append(f"  Releases:        {m['releases']:>8,}")
+            lines.append(f"  Commits (30d):   {m['commits_last_30d']:>8,}")
+            lines.append(f"  Avg Issue Close: {str(m['avg_issue_close_days']) + ' days' if m['avg_issue_close_days'] else 'N/A':>8}")
+            lines.append(f"  Last Release:    {str(m.get('last_release') or 'N/A'):>8}")
+            lines.append(f"")
+            lines.append(f"  --- Report Card ---")
+            lines.append(f"  Activity:      [{s['activity']}]")
+            lines.append(f"  Maintenance:   [{s['maintenance']}]")
+            lines.append(f"  Community:     [{s['community']}]")
+            lines.append(f"  Popularity:    [{s['popularity']}]")
+            lines.append(f"  Opportunity:   [{s['opportunity'].upper()}]")
+            lines.append(f"")
+            lines.append(f"  --- Owner ---")
+            lines.append(f"  {o.get('login', '?')} / {o.get('name', '?')}")
+            contacts = []
+            if o.get('email'): contacts.append(f"Email: {o['email']}")
+            if o.get('twitter'): contacts.append(f"Twitter: @{o['twitter']}")
+            if o.get('blog'): contacts.append(f"Blog: {o['blog']}")
+            if o.get('location'): contacts.append(f"Location: {o['location']}")
+            lines.append(f"  {' | '.join(contacts) if contacts else 'GitHub only'}")
+            lines.append(f"{'='*60}")
+
         return "\n".join(lines)
 
 
