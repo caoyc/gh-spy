@@ -26,6 +26,35 @@ def _stars_short(n):
     return str(n)
 
 
+def _split_tiers(reports, max_tiers=3):
+    """基于 stars 自然间隙划分梯队。"""
+    if len(reports) <= 3:
+        return [reports]
+
+    stars_list = [r['metrics']['stars'] for r in reports]
+
+    # 计算相邻项目间的 gap ratio
+    gaps = []
+    for i in range(len(stars_list) - 1):
+        if stars_list[i + 1] > 0:
+            ratio = stars_list[i] / stars_list[i + 1]
+            gaps.append((i, ratio))
+
+    # 找 gap ratio 最大的前 (max_tiers-1) 个分界点
+    gaps.sort(key=lambda x: -x[1])
+    split_indices = sorted([g[0] for g in gaps[:max_tiers - 1]])
+
+    # 按分界点切割
+    tiers = []
+    prev = 0
+    for idx in split_indices:
+        tiers.append(reports[prev:idx + 1])
+        prev = idx + 1
+    tiers.append(reports[prev:])
+
+    return [t for t in tiers if t]
+
+
 def _tier_name(tier_idx, reports_in_tier):
     """根据梯队项目特征生成有意义的梯队名。"""
     if tier_idx == 0:
