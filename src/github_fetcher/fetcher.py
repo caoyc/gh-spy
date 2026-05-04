@@ -605,7 +605,7 @@ Stars：{repo['stars']}
         lines.append(f"  Releases:        {m['releases']:>8,}")
         lines.append(f"  Commits (30d):   {m['commits_last_30d']:>8,}")
         lines.append(f"  Avg Issue Close: {str(m['avg_issue_close_days']) + ' days' if m['avg_issue_close_days'] else 'N/A':>8}")
-        lines.append(f"  Last Release:    {m.get('last_release', 'N/A'):>8}")
+        lines.append(f"  Last Release:    {str(m.get('last_release') or 'N/A'):>8}")
         lines.append(f"")
         lines.append(f"  --- Report Card ---")
         lines.append(f"  Activity:      [{s['activity']}]")
